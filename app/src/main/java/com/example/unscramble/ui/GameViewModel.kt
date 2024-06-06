@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.unscramble.data.SCORE_INCREASE
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +19,7 @@ class GameViewModel: ViewModel() {
     var userGuess by mutableStateOf("")
         private set
 
-    private lateinit var currentWord: String
+    lateinit var currentWord: String
     private var usedWords: MutableSet<String> = mutableSetOf()
 
     init {
@@ -51,10 +52,23 @@ class GameViewModel: ViewModel() {
 
     fun checkUserGuess() {
         if (userGuess.equals(currentWord, ignoreCase = true)) {
-            // TODO: update game score
+            val updatedScore = _uiState.value.gameScore.plus(SCORE_INCREASE)
+            updateGameScore(updatedScore)
         } else {
             _uiState.update { it.copy(isGuessedWordWrong = true) }
-            updateUserGuess("")
+        }
+        updateUserGuess("")
+    }
+
+    private fun updateGameScore(updatedScore: Int) {
+        _uiState.update {
+            it.copy(
+                hintNeeded = false,
+                currentScrambledWord = pickRandomWordAndShuffle(),
+                isGuessedWordWrong = false,
+                guessedWordCount = it.guessedWordCount.inc(),
+                gameScore = updatedScore,
+            )
         }
     }
 
@@ -62,8 +76,20 @@ class GameViewModel: ViewModel() {
         userGuess = guessedWord
     }
 
-    fun getNewWord() {
-        _uiState.update { it.copy(currentScrambledWord = pickRandomWordAndShuffle()) }
+    fun skipWord() {
+        _uiState.update {
+            it.copy(
+                currentScrambledWord = pickRandomWordAndShuffle(),
+                guessedWordCount = it.guessedWordCount.inc(),
+                isGuessedWordWrong = false,
+                hintNeeded = false
+            )
+        }
+        updateUserGuess("")
+    }
+
+    fun showAnswer() {
+        _uiState.update { it.copy(hintNeeded = true) }
     }
 
 }

@@ -17,10 +17,10 @@ package com.example.unscramble.ui
 
 import android.app.Activity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -30,14 +30,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.MaterialTheme.typography
@@ -55,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -91,7 +88,10 @@ fun GameScreen(
             isGuessedWordWrong = gameUiState.isGuessedWordWrong,
             onUserGuessChanged = { gameViewModel.updateUserGuess(it) },
             onKeyboardDone = { gameViewModel.checkUserGuess() },
-            getNewWord = { gameViewModel.getNewWord() },
+            guessedWordCount = gameUiState.guessedWordCount,
+            hintNeeded = gameUiState.hintNeeded,
+            answer = gameViewModel.currentWord,
+            showAnswer = { gameViewModel.showAnswer() },
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
@@ -116,7 +116,7 @@ fun GameScreen(
             }
 
             OutlinedButton(
-                onClick = { },
+                onClick = { gameViewModel.skipWord() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
@@ -126,7 +126,7 @@ fun GameScreen(
             }
         }
 
-        GameStatus(score = 0, modifier = Modifier.padding(20.dp))
+        GameStatus(score = gameUiState.gameScore, modifier = Modifier.padding(20.dp))
 
     }
 }
@@ -151,7 +151,10 @@ fun GameLayout(
     isGuessedWordWrong: Boolean,
     onUserGuessChanged: (String) -> Unit,
     onKeyboardDone: () -> Unit,
-    getNewWord: () -> Unit,
+    guessedWordCount: Int,
+    hintNeeded: Boolean,
+    showAnswer: () -> Unit,
+    answer: String,
     modifier: Modifier = Modifier
 ) {
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
@@ -166,18 +169,29 @@ fun GameLayout(
             modifier = Modifier.padding(mediumPadding)
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                IconButton(onClick = getNewWord) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Get a new word")
+                Text(
+                    text = stringResource(id = R.string.answer),
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.primary,
+                    modifier = Modifier.clickable { showAnswer() }
+                )
+                if (hintNeeded) {
+                    Text(
+                        text = answer,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.error
+                    )
                 }
-                Spacer(modifier = Modifier.weight(1f))
                 Text(
                     modifier = Modifier
                         .clip(shapes.medium)
                         .background(colorScheme.surfaceTint)
                         .padding(horizontal = 10.dp, vertical = 4.dp),
-                    text = stringResource(R.string.word_count, 0),
+                    text = stringResource(R.string.word_count, guessedWordCount),
                     style = typography.titleMedium,
                     color = colorScheme.onPrimary
                 )
