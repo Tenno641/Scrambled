@@ -62,6 +62,10 @@ class GameViewModel: ViewModel() {
         userGuess = guessedWord
     }
 
+    fun getNewWord() {
+        _uiState.update { it.copy(currentScrambledWord = pickRandomWordAndShuffle()) }
+    }
+
 }
 
 
