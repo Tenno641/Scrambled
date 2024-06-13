@@ -125,9 +125,13 @@ fun GameScreen(
                 )
             }
         }
-
         GameStatus(score = gameUiState.gameScore, modifier = Modifier.padding(20.dp))
-
+        if (gameUiState.isGameOver) {
+            FinalScoreDialog(
+                score = gameUiState.gameScore,
+                onPlayAgain = { gameViewModel.resetGame() }
+            )
+        }
     }
 }
 
