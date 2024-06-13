@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.unscramble.data.MAX_NO_OF_WORDS
 import com.example.unscramble.data.SCORE_INCREASE
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,7 +52,7 @@ class GameViewModel: ViewModel() {
     }
 
     fun checkUserGuess() {
-        if (userGuess.equals(currentWord, ignoreCase = true)) {
+        if (userGuess.trim().equals(currentWord, ignoreCase = true)) {
             val updatedScore = _uiState.value.gameScore.plus(SCORE_INCREASE)
             updateGameScore(updatedScore)
         } else {
@@ -61,14 +62,21 @@ class GameViewModel: ViewModel() {
     }
 
     private fun updateGameScore(updatedScore: Int) {
-        _uiState.update {
-            it.copy(
-                hintNeeded = false,
-                currentScrambledWord = pickRandomWordAndShuffle(),
-                isGuessedWordWrong = false,
-                guessedWordCount = it.guessedWordCount.inc(),
-                gameScore = updatedScore,
-            )
+        if (usedWords.size == MAX_NO_OF_WORDS) {
+            _uiState.update {
+                it.copy(
+                    isGameOver = true
+                )
+            }
+        } else {
+            _uiState.update {
+                it.copy(
+                    hintNeeded = false,
+                    currentScrambledWord = pickRandomWordAndShuffle(),
+                    guessedWordCount = it.guessedWordCount.inc(),
+                    gameScore = updatedScore
+                )
+            }
         }
     }
 
@@ -77,14 +85,8 @@ class GameViewModel: ViewModel() {
     }
 
     fun skipWord() {
-        _uiState.update {
-            it.copy(
-                currentScrambledWord = pickRandomWordAndShuffle(),
-                guessedWordCount = it.guessedWordCount.inc(),
-                isGuessedWordWrong = false,
-                hintNeeded = false
-            )
-        }
+        val updatedScore = _uiState.value.gameScore
+        updateGameScore(updatedScore)
         updateUserGuess("")
     }
 
